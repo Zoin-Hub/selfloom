@@ -2,6 +2,15 @@
   "name": "selfloom",
   "version": "0.1.0",
   "description": "把你的创作从各平台收集成一份 AI 能读的文件 | Collect your own writing from multiple platforms into one AI-readable file",
+  "author": "Zoin-Hub",
+  "homepage": "https://selfloom.zoin-tech.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zoin-Hub/selfloom.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Zoin-Hub/selfloom/issues"
+  },
   "type": "module",
   "bin": {
     "selfloom": "bin/selfloom.mjs"
