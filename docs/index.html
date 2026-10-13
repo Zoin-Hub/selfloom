@@ -1,0 +1,702 @@
+<!doctype html>
+<!--
+  Self-Loom 落地页 —— 单文件、零外部资源（不引 CDN / 字体 / JS 库）。
+  本地预览：直接用浏览器打开本文件。
+  部署：仓库 Settings → Pages → Source 选分支 + /docs 目录。
+  仓库地址：github.com/Zoin-Hub/selfloom · gitee.com/Zoin-Hub/selfloom
+  正式域名：https://selfloom.zoin-tech.com/（已写入 canonical 与 og:url）
+
+  待补素材：
+  1) 演示视频：放在 .video-slot 里（建议 16:9，45–60 秒，见该区块注释里的分镜）
+  2) 前后对比截图：放在 .shot-pair 的两个占位框里
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-Loom — 一行命令，把你散在各平台的创作收成一个 AI 能读的文件</title>
+<meta name="description" content="Self-Loom 把你散在微信读书、QQ 邮箱、DeepSeek 里的创作，收成一份本地、可审计、AI 能直接读的个人上下文。本地运行，不碰你的密码，零第三方依赖。">
+<meta property="og:title" content="Self-Loom — 让你的 AI 真正认识你">
+<meta property="og:description" content="一行命令，把你散在各平台的创作收成一个 AI 能读的文件。本地运行，不碰你的密码。">
+<link rel="canonical" href="https://selfloom.zoin-tech.com/">
+<meta property="og:url" content="https://selfloom.zoin-tech.com/">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --ink:#16161c; --ink-2:#4a4a57; --ink-3:#8c8c99;
+    --line:#e9e9ef; --line-2:#dcdce6; --bg:#fbfbfd; --card:#fff;
+    --accent:#4f46e5; --accent-soft:#eef0ff;
+    --ok:#0f9d58; --ok-soft:#eaf7ef;
+    --warn:#c2410c; --warn-soft:#fff3ec;
+    --max:920px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+  code,pre,.mono{font-family:var(--mono)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---------- nav ---------- */
+  header{border-bottom:1px solid var(--line);background:rgba(255,255,255,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{font-weight:700;letter-spacing:.2px}
+  .brand span{color:var(--ink-3);font-weight:400;margin-left:7px;font-size:13px}
+  nav{display:flex;gap:18px;font-size:13.5px;align-items:center}
+  nav a{color:var(--ink-2)}
+  @media(max-width:760px){nav .hide-sm{display:none}}
+
+  /* ---------- 通用 ---------- */
+  section{padding:62px 0;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:0}
+  .eyebrow{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:1.4px;color:var(--accent);
+    background:var(--accent-soft);padding:5px 11px;border-radius:999px;margin-bottom:16px}
+  h2{font-size:clamp(21px,2.8vw,29px);margin:0 0 10px;letter-spacing:-.4px;font-weight:800}
+  h3{font-size:17px;margin:0 0 8px}
+  .lead{color:var(--ink-2);margin:0 0 30px;max-width:660px}
+  .note{color:var(--ink-3);font-size:13px;margin-top:14px}
+  .note b{color:var(--ink-2)}
+
+  /* ---------- hero ---------- */
+  .hero{padding:72px 0 54px;text-align:center}
+  .hero h1{font-size:clamp(28px,4.8vw,46px);line-height:1.26;margin:0 0 18px;letter-spacing:-1px;font-weight:800}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero .sub{color:var(--ink-2);font-size:clamp(15px,1.75vw,17.5px);margin:0 auto 30px;max-width:650px}
+  .hero .sub b{color:var(--ink)}
+  .cmd{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border-radius:12px;
+    padding:12px 12px 12px 20px;font-size:15px;max-width:100%}
+  .cmd code{color:#fff;white-space:nowrap;overflow-x:auto}
+  .cmd button{flex:none;border:0;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;
+    background:rgba(255,255,255,.16);color:#fff;font-family:inherit;transition:background .15s}
+  .cmd button:hover{background:rgba(255,255,255,.3)}
+  .under-cmd{color:var(--ink-3);font-size:13.5px;margin-top:14px}
+  .under-cmd strong{color:var(--ink-2)}
+
+  .proof-strip{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:30px;
+    padding-top:26px;border-top:1px dashed var(--line-2)}
+  .proof-strip div{text-align:center}
+  .proof-strip b{display:block;font-size:20px;font-weight:800;letter-spacing:-.3px}
+  .proof-strip span{font-size:12.5px;color:var(--ink-3)}
+
+  /* ---------- 终端回放 ---------- */
+  .term{background:#101018;border-radius:14px;overflow:hidden;box-shadow:0 18px 40px -22px rgba(20,20,40,.5)}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#1b1b26}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .term-bar .t{margin-left:10px;color:#77778c;font-size:12px;font-family:var(--mono)}
+  .term-bar button{margin-left:auto;background:rgba(255,255,255,.1);color:#c9c9d8;border:0;border-radius:7px;
+    padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+  .term-bar button:hover{background:rgba(255,255,255,.2)}
+  .term pre{margin:0;padding:18px 20px 22px;min-height:250px;color:#d5d5e2;font-size:12.5px;line-height:1.72;
+    white-space:pre-wrap;word-break:break-word}
+  .term .g{color:#5fd39a} .term .d{color:#7c7c93} .term .y{color:#ffd479} .term .c{color:#8fd3fe}
+  .term .r{color:#ff8f8f}
+  .cursor{display:inline-block;width:7px;height:14px;background:#8fd3fe;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  .video-slot{margin-top:22px;border:2px dashed var(--line-2);border-radius:14px;background:#fff;
+    aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    color:var(--ink-3);text-align:center;padding:24px}
+  .video-slot .play{width:56px;height:56px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:20px}
+  .video-slot b{color:var(--ink-2);font-size:15px}
+  .video-slot small{font-size:12.5px;line-height:1.7;max-width:460px}
+
+  /* ---------- 时间对比 ---------- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
+  @media(max-width:760px){.stats{grid-template-columns:1fr}}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+  .stat.before{background:var(--warn-soft);border-color:#f6ded0}
+  .stat.after{background:var(--ok-soft);border-color:#cfead9}
+  .stat .label{font-size:12.5px;color:var(--ink-3);font-weight:600;letter-spacing:.3px}
+  .stat .num{font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.8px;margin:6px 0 2px}
+  .stat.before .num{color:var(--warn)} .stat.after .num{color:var(--ok)}
+  .stat .sub{font-size:12.5px;color:var(--ink-3)}
+
+  table.cmp{width:100%;border-collapse:collapse;font-size:14.5px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  table.cmp th,table.cmp td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line)}
+  table.cmp tr:last-child td{border-bottom:0}
+  table.cmp th{background:#fafafd;font-size:12.5px;color:var(--ink-3);font-weight:700}
+  table.cmp td:first-child{color:var(--ink-2)}
+  table.cmp .yes{color:var(--ok);font-weight:700}
+  table.cmp .no{color:var(--warn)}
+
+  /* ---------- 前后对比截图 ---------- */
+  .shot-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.shot-pair{grid-template-columns:1fr}}
+  .shot{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .shot .cap{padding:11px 14px;font-size:12.5px;font-weight:700;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:8px}
+  .shot.before .cap{background:var(--warn-soft);color:var(--warn)}
+  .shot.after .cap{background:var(--ok-soft);color:var(--ok)}
+  .shot .body{padding:16px;font-size:13.5px;color:var(--ink-2);min-height:150px}
+  .shot .ph{border:1.5px dashed var(--line-2);border-radius:10px;padding:22px 16px;text-align:center;
+    color:var(--ink-3);font-size:12.5px;line-height:1.7}
+
+  .scatter{display:flex;flex-direction:column;gap:10px}
+  .scatter .app{display:flex;gap:10px;align-items:flex-start;background:#fafafd;border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px}
+  .scatter .app b{font-size:13.5px;display:block;color:var(--ink)}
+  .scatter .app span{font-size:12px;color:var(--ink-3)}
+
+  /* ---------- 应用场景 ---------- */
+  .scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:760px){.scenes{grid-template-columns:1fr}}
+  .scene{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+  .scene .ico{font-size:20px;margin-bottom:8px}
+  .scene p{margin:0;font-size:14px;color:var(--ink-2)}
+
+  /* ---------- 检测 ---------- */
+  .verify{display:flex;flex-direction:column;gap:12px}
+  .vitem{background:#fff;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:16px 18px}
+  .vitem .vh{font-weight:700;font-size:14.5px;margin-bottom:5px}
+  .vitem p{margin:0;font-size:14px;color:var(--ink-2)}
+  .vitem .res{display:inline-block;margin-top:9px;font-size:12.5px;font-weight:700;color:var(--ok);
+    background:var(--ok-soft);padding:3px 10px;border-radius:999px}
+  .vitem .res.bad{color:var(--warn);background:var(--warn-soft)}
+
+  .dep{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .dep th,.dep td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  .dep tr:last-child td{border-bottom:0}
+  .dep th{background:#fafafd;font-size:12.5px;color:var(--ink-3);font-weight:700}
+  .dep code{font-size:12.5px;background:#f5f5fa;padding:1px 6px;border-radius:5px}
+
+  /* ---------- 原理 / 架构 ---------- */
+  .principle{display:flex;flex-direction:column;gap:20px}
+  .pr{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px}
+  .pr h3{display:flex;align-items:center;gap:9px}
+  .pr .step{font-size:12px;font-weight:800;color:#fff;background:var(--accent);width:22px;height:22px;
+    border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .pr p{margin:0 0 10px;color:var(--ink-2);font-size:14.5px}
+  .pr p:last-child{margin-bottom:0}
+
+  .arch{background:#12121a;border-radius:14px;padding:22px;color:#c8c8d6;font-family:var(--mono);font-size:12.5px;
+    line-height:1.85;overflow-x:auto;white-space:pre}
+
+  /* ---------- 诚实边界 ---------- */
+  .honest{background:#fff}
+  .honest ul{margin:0;padding-left:22px;color:var(--ink-2);font-size:14.5px}
+  .honest li{margin:10px 0}
+  .honest strong{color:var(--ink)}
+
+  /* ---------- FAQ ---------- */
+  details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:10px}
+  details[open]{border-color:var(--line-2)}
+  summary{cursor:pointer;font-weight:650;font-size:14.5px;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"＋";color:var(--accent);font-weight:700;margin-right:10px}
+  details[open] summary::before{content:"－"}
+  details p{margin:11px 0 0;color:var(--ink-2);font-size:14px}
+
+  /* ---------- CTA / footer ---------- */
+  .cta{text-align:center}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:26px 0 30px;text-align:left}
+  @media(max-width:760px){.steps{grid-template-columns:1fr}}
+  .step-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
+  .step-card .n{font-size:11.5px;font-weight:800;color:var(--accent);letter-spacing:1px}
+  .step-card code{display:block;margin-top:8px;font-size:12.5px;background:#f5f5fa;padding:8px 10px;border-radius:8px;
+    overflow-x:auto;white-space:nowrap}
+  .btns{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:11px;padding:13px 24px;font-size:15px;
+    font-weight:650;border:1px solid transparent;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{text-decoration:none;filter:brightness(1.08)}
+  .btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{text-decoration:none;border-color:#cfcfe0}
+  .btn[aria-disabled="true"]{background:#f2f2f7;color:var(--ink-3);border-color:var(--line);cursor:not-allowed}
+  .btn small{font-weight:400;opacity:.75}
+  footer{border-top:1px solid var(--line);padding:34px 0 52px;color:var(--ink-3);font-size:13.5px;text-align:center}
+  .toast{position:fixed;left:50%;bottom:36px;transform:translate(-50%,14px);opacity:0;background:var(--ink);
+    color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;transition:.22s;pointer-events:none;z-index:50}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">🧵 Self-Loom <span>selfloom</span></div>
+    <nav>
+      <a class="hide-sm" href="#demo">看它跑</a>
+      <a class="hide-sm" href="#example">实例</a>
+      <a class="hide-sm" href="#proof">检测</a>
+      <a class="hide-sm" href="#principle">原理</a>
+      <a href="https://github.com/Zoin-Hub/selfloom/blob/main/README.en.md" target="_blank" rel="noopener">English</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ 1. HERO ============ -->
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">本地优先 · 不碰你的密码 · 零第三方依赖</span>
+    <h1>一行命令，<br>把你散在各平台的创作，<br>收成一个 <em>AI 能读</em> 的文件。</h1>
+    <p class="sub">
+      你写了十年，AI 却对你一无所知。<br>
+      <b>微信读书 · QQ 邮箱 · DeepSeek</b> —— 收成一份属于你的个人上下文。
+    </p>
+    <div class="cmd">
+      <code id="cmdtext">npx selfloom demo</code>
+      <button id="copybtn" type="button">复制</button>
+    </div>
+    <p class="under-cmd">零配置 · 不联网 · 不需要任何凭证 —— <strong>先看到结果，再决定要不要授权</strong></p>
+
+    <div class="proof-strip">
+      <div><b>3</b><span>个平台一次汇总</span></div>
+      <div><b>3600</b><span>条记录（一次真实运行）</span></div>
+      <div><b>0</b><span>对账差额</span></div>
+      <div><b>0.6–1.5s</b><span>日常增量更新</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 看它跑起来 ============ -->
+<section id="demo">
+  <div class="wrap">
+    <span class="eyebrow">看它跑起来</span>
+    <h2>不用注册，不用授权，先看它跑一遍</h2>
+    <p class="lead">下面是<strong>一次真实运行的输出回放</strong>（不是模拟动画，文字来自实际终端）。看完了再决定要不要接自己的账号。</p>
+
+    <div class="term" id="term">
+      <div class="term-bar">
+        <span class="dot" style="background:#ff5f57"></span>
+        <span class="dot" style="background:#febc2e"></span>
+        <span class="dot" style="background:#28c840"></span>
+        <span class="t">selfloom — 终端回放</span>
+        <button id="replay" type="button">重播</button>
+      </div>
+      <pre id="termout" aria-live="polite"></pre>
+    </div>
+
+    <!-- 真人解说视频占位。分镜见本文件顶部注释；建议 16:9、45–60 秒、静音可自动播放 -->
+    <div class="video-slot">
+      <div class="play">▶</div>
+      <b>演示视频（待录制）</b>
+      <small>建议 45–60 秒、16:9、静音循环。分镜：① 桌面只有三个 App（5s）② 粘一条命令回车（8s）③ 终端跑完、打开 timeline.md（15s）④ 往下滚动看三平台内容混排（15s）⑤ 回到终端展示对账"差额 0"（10s）</small>
+    </div>
+    <p class="note"><b>为什么先做终端回放：</b>它不需要视频文件、不占带宽、离线也能看，而且它展示的是真实输出——比任何手绘 mockup 都更可信。真人视频录好后替换上面的占位框即可。</p>
+  </div>
+</section>
+
+<!-- ============ 3. 实例 ============ -->
+<section id="example">
+  <div class="wrap">
+    <span class="eyebrow">实例</span>
+    <h2>以前要多久，现在要多久</h2>
+    <p class="lead">数字来自一次真实运行：微信读书 249 本书、QQ 邮箱 4257 封邮件、DeepSeek 99 场对话。</p>
+
+    <div class="stats">
+      <div class="stat before">
+        <div class="label">手动整理（估算）</div>
+        <div class="num">≈ 12 小时</div>
+        <div class="sub">仅微信读书一项 · 249 本 × 约 3 分钟</div>
+      </div>
+      <div class="stat after">
+        <div class="label">Self-Loom 首次运行</div>
+        <div class="num">6 分 54 秒</div>
+        <div class="sub">163s + 251s + 0.1s，三个平台全量</div>
+      </div>
+      <div class="stat after">
+        <div class="label">之后每次更新</div>
+        <div class="num">0.6–1.5 秒</div>
+        <div class="sub">只重抓计数变了的对象</div>
+      </div>
+    </div>
+
+    <table class="cmp">
+      <thead><tr><th>这件事</th><th>手动</th><th>Self-Loom</th></tr></thead>
+      <tbody>
+        <tr><td>微信读书 249 本书的想法与书评</td><td class="no">逐本打开、复制、粘贴</td><td class="yes">一次命令</td></tr>
+        <tr><td>从 4257 封邮件里挑出"我发给自己的"</td><td class="no">无法完成</td><td class="yes">自动筛出 79 封</td></tr>
+        <tr><td>把 99 场对话导出成可读文件</td><td class="no">下载 zip 后仍需手工处理</td><td class="yes">自动解析</td></tr>
+        <tr><td>三个平台按时间排在一起</td><td class="no">人工对齐时间线</td><td class="yes">自动混排</td></tr>
+        <tr><td>确认"有没有漏掉"</td><td class="no">只能凭感觉</td><td class="yes">逐本对账，差额 0</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>关于"≈ 12 小时"：</b>这是按"手动导出单本书约 3 分钟"估算的（打开网页版 → 进笔记本 → 选书 → 导出/复制 → 粘贴），<b>不是精确测量</b>。我们宁愿标注估算依据，也不想给你一个看起来很准的假数字。首次运行的时间则是三项实测相加。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>同一批内容，两个世界</h2>
+    <p class="lead">左边是你现在的状态，右边是跑完之后的状态。</p>
+    <div class="shot-pair">
+      <div class="shot before">
+        <div class="cap">😮‍💨 之前：散在三个 App 里</div>
+        <div class="body">
+          <div class="scatter">
+            <div class="app"><span>📚</span><div><b>微信读书</b><span>249 本书的划线、想法、书评</span></div></div>
+            <div class="app"><span>✉️</span><div><b>QQ 邮箱</b><span>转发给自己的一封封记录</span></div></div>
+            <div class="app"><span>💬</span><div><b>DeepSeek</b><span>99 场对话，导出后仍是一堆 JSON</span></div></div>
+          </div>
+          <p style="margin:14px 0 0;font-size:13px;color:var(--ink-3)">三种格式、三套时间、无法一起喂给 AI。</p>
+          <div class="ph" style="margin-top:14px">📷 这里放<b>手动整理时</b>的截图（三个 App 各截一张）</div>
+        </div>
+      </div>
+      <div class="shot after">
+        <div class="cap">✨ 之后：一份文件，一条时间线</div>
+        <div class="body">
+<pre class="mono" style="margin:0;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--ink-2)"># 我的思考时间线
+
+&gt; 覆盖 2015-09-25 ~ 2026-10-13
+&gt; 共 1894 条 · 来自 微信读书 / QQ 邮箱 / DeepSeek
+
+### 2026-04-08
+**[QQ 邮箱]**
+今天的实验：把最清醒的两小时完全锁起来…
+
+**[微信读书 · 事实]**
+&gt; 而中间的大多数才是真正在改变世界的力量。
+「二元对立」是一种认知上的省力装置…</pre>
+          <div class="ph" style="margin-top:14px">📷 这里放<b>跑完后</b>的截图（编辑器里打开 timeline.md）</div>
+        </div>
+      </div>
+    </div>
+    <p class="note">右上的示例内容来自内置的<b>虚构样例数据</b>——你的真实笔记不会出现在这个页面上。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>这份文件能拿来做什么</h2>
+    <p class="lead">它不是一个"备份工具"。它解决的是：AI 帮不了你，是因为它不知道你是谁。</p>
+    <div class="scenes">
+      <div class="scene">
+        <div class="ico">🧠</div>
+        <h3>给 AI 一份你的上下文</h3>
+        <p>把 <code>timeline.md</code> 丢给任意 AI，它才第一次知道你读过什么、想过什么、卡在哪。不用你再解释一遍背景。</p>
+      </div>
+      <div class="scene">
+        <div class="ico">🪞</div>
+        <h3>让 AI 做一份"思考者画像"</h3>
+        <p>1894 条跨越 11 年的记录，足够让 AI 指出你反复回到的主题、你回避的问题、以及你真正的比较优势在哪。</p>
+      </div>
+      <div class="scene">
+        <div class="ico">📅</div>
+        <h3>年度复盘不用再翻手机</h3>
+        <p>时间线天然按年/月/日排好。写年终总结时，直接搜那一年你在想什么。</p>
+      </div>
+      <div class="scene">
+        <div class="ico">✍️</div>
+        <h3>写作者的素材库</h3>
+        <p><code>items.jsonl</code> 一行一条，可检索、可向量化。你过去三年写下的句子，变成可复用的素材。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. 检测 ============ -->
+<section id="proof">
+  <div class="wrap">
+    <span class="eyebrow">检测</span>
+    <h2>凭什么说它可靠</h2>
+    <p class="lead">三个卖点不是形容词，每一个都有具体的实现方式和可检查的证据。</p>
+
+    <table class="dep">
+      <thead><tr><th>卖点</th><th>靠什么实现</th><th>你可以怎么检查</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>不碰你的密码</b></td>
+          <td>只接受只读的一次性凭证：微信读书的 API Key、QQ 邮箱的 IMAP 授权码。凭证存本机 <code>~/.selfloom/credentials.json</code>，不进产物、不进日志、不进对话。</td>
+          <td>代码开源且<b>零第三方依赖</b>，全部可读；<code>.gitignore</code> 已排除凭证文件。</td>
+        </tr>
+        <tr>
+          <td><b>有对账，不糊弄</b></td>
+          <td>两条硬规则：① 差额必须为 0，且每一笔都要逐项归因；② 来源声明有内容、却一条都没抓到 —— 一律判为失败。</td>
+          <td>打开 <code>manifest.json</code>，每个平台的「声称 / 实抓 / 差额」都在里面。</td>
+        </tr>
+        <tr>
+          <td><b>一份 AI 能读的文件</b></td>
+          <td>三层产物：<code>items.jsonl</code>（机器层）· <code>&lt;平台&gt;.md</code>（保留原生语义）· <code>timeline.md</code>（按时间混排）。</td>
+          <td>纯 Markdown + JSONL，无专有格式，任何编辑器/AI 都能打开。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>我是怎么验证它的</h2>
+    <p class="lead">下面是开发过程中<b>真实发生过的四次验证</b>——包括我们自己的 bug。把过程摊开，比给一个"已测试"的标签更有说服力。</p>
+    <div class="verify">
+      <div class="vitem">
+        <div class="vh">① 逐本对账微信读书的 249 本书</div>
+        <p>把接口声明的「划线 + 想法」与实抓记录逐本比对。发现 308 段划线在「划线」和「想法」里被各记了一次，属于 App 的重复计数，已合并。</p>
+        <span class="res">249 本书逐本差额 = 0</span>
+      </div>
+      <div class="vitem">
+        <div class="vh">② 篡改计数，验证增量真的会重抓</div>
+        <p>手动把某一本书的 <code>noteCount</code> 改成 999，再跑一次同步。它精确重抓了那一本，其余 248 本走缓存。</p>
+        <span class="res">命中缓存 248 · 本次重抓 1 · 用时 2.1 秒</span>
+      </div>
+      <div class="vitem">
+        <div class="vh">③ 抓到一个"程序不报错、结果却是空的"的 bug</div>
+        <p>DeepSeek 适配器最初把 99 场对话全部解析成 0 条记录，而程序<b>报告"对账通过"</b>——因为两边都是 0。根因是把"叶子节点"（自己没有子节点）写成了"不在任何子节点里"（即根节点）。</p>
+        <span class="res bad">已修，并新增硬规则：声明有数据却抓到 0 条 → 直接判失败</span>
+      </div>
+      <div class="vitem">
+        <div class="vh">④ 一封 43 MB 附件的邮件，不再被反复下载</div>
+        <p>有封邮件正文为空、却带 43 MB 附件。原逻辑把它当"解析失败"，于是每次同步都重新下载 43 MB。修正为：「没有可导出的文本」是一个<b>已归因的事实</b>，不是错误——记录、计数、缓存，不再重下。</p>
+        <span class="res">16 封空正文邮件已归因 · 0 次重复下载</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>对账数据（一次真实运行）</h2>
+    <p class="lead">这三行是这套工具的核心承诺：<b>声明多少、抓到多少、差额去哪了</b>。</p>
+    <table class="cmp">
+      <thead><tr><th>平台</th><th>来源声称</th><th>实际抓到</th><th>差额</th></tr></thead>
+      <tbody>
+        <tr><td>微信读书</td><td>2417 条（划线 + 想法）</td><td>2417 条</td><td class="yes">0</td></tr>
+        <tr><td>QQ 邮箱</td><td>4257 封中命中 79 封</td><td>79 封（66 封有条目 + 13 封空正文）</td><td class="yes">0</td></tr>
+        <tr><td>DeepSeek</td><td>文件内 2030 个片段</td><td>1128 条 + 547 思考 + 307 工具轨迹 + 48 放弃分支</td><td class="yes">0</td></tr>
+      </tbody>
+    </table>
+    <p class="note"><b>差额为 0 的含义：</b>每一笔"没导出"的东西都能说清去哪了（官方不提供内容 / 已归因的事实 / 你重新生成过的旧分支），没有一条是"不知道去哪了"。微信读书的 24 条书签属于第一类——官方只给数量、不给内容，我们在产物里如实标注。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>产品便利性：时间花在哪</h2>
+    <p class="lead">省时间不只是"跑得快"，而是<b>以后每次都不用重来</b>。</p>
+    <table class="cmp">
+      <thead><tr><th>场景</th><th>手动</th><th>Self-Loom</th></tr></thead>
+      <tbody>
+        <tr><td>第一次把三个平台全部收进来</td><td class="no">≈ 12 小时以上</td><td class="yes">6 分 54 秒</td></tr>
+        <tr><td>半个月后想更新（读了几本新书）</td><td class="no">再走一遍全部流程</td><td class="yes">1.5 秒</td></tr>
+        <tr><td>收到新的转发邮件</td><td class="no">手动复制粘贴</td><td class="yes">0.6 秒</td></tr>
+        <tr><td>凭证明天过期了</td><td class="no">抓取失败很久才发现</td><td class="yes"><code>doctor</code> 直接告诉你哪个失效了</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 5. 原理 ============ -->
+<section id="principle">
+  <div class="wrap">
+    <span class="eyebrow">原理</span>
+    <h2>为什么是这么设计的</h2>
+    <p class="lead">每一个"不做"，都是想清楚之后才不做的。</p>
+    <div class="principle">
+      <div class="pr">
+        <h3><span class="step">1</span> 为什么不要你的账号密码</h3>
+        <p>因为"用密码换自动登录"这条路，技术上就走不通，而且在信任上是负收益。</p>
+        <p><b>微信读书</b>的凭证来自微信扫码——微信根本不提供密码登录接口，硬做只能模拟点击，极易触发风控，代价是用户微信被封。<b>QQ 邮箱</b>的 IMAP 授权码生成时必须过短信验证，手机在用户手里，无法自动化。</p>
+        <p>所以凭证的<b>获取</b>无法自动化；但凭证的<b>验证、保存、失效提醒</b>完全可以——而那才是真正耗时的部分。这就是 <code>auth</code>（导入即校验）和 <code>doctor</code>（体检）存在的理由。</p>
+      </div>
+      <div class="pr">
+        <h3><span class="step">2</span> 为什么必须有对账</h3>
+        <p>这类工具最危险的失败<b>不是报错，而是静默</b>：程序正常退出、产物看起来完整，但实际上少了一半。</p>
+        <p>所以我们把两条规则写进产品：差额必须为 0 且逐项归因；来源有内容却抓到 0 条 —— 判失败。<b>第二条在开发第一天就抓到了我们自己的 bug</b>（见上面的检测③）。</p>
+      </div>
+      <div class="pr">
+        <h3><span class="step">3</span> 为什么产物要分三层</h3>
+        <p>因为"给 AI 读"和"给人查"是两种需求，混在一起两个都做不好。</p>
+        <p>机器层要一行一条、可流式、可检索；平台层要保留原生语义（微信读书按书/章，邮箱按日期）；汇总层要跨平台按时间混排。<b>三者不是冗余，是三种用途。</b></p>
+      </div>
+      <div class="pr">
+        <h3><span class="step">4</span> 为什么零第三方依赖</h3>
+        <p>一个要接收你凭证的工具，多一个依赖就多一份供应链风险，也少一分可审计性。</p>
+        <p>所以 IMAP 客户端、MIME 解析、ZIP 读取、HTML 转文本，全部用 Node 内置模块手写。代价是开发慢一些，换来的是<b>你能把全部代码读完</b>，以及 <code>npx</code> 真正零安装。</p>
+      </div>
+    </div>
+
+    <div class="arch">   微信读书 API ─┐
+   QQ 邮箱 IMAP ─┼─→  独立适配器（各自负责抓取 + 对账）
+   DeepSeek zip ─┘        │
+                          ▼
+              ~/.selfloom/raw/&lt;platform&gt;.json      ← 原始层，可审计、可重放
+                          │
+                          ▼
+              ┌───────────┴────────────┐
+              ▼                        ▼
+        items.jsonl             &lt;platform&gt;.md      ← 机器层 / 平台层
+              └───────────┬────────────┘
+                          ▼
+                     timeline.md                  ← 汇总层：一条属于你的时间线
+                          │
+                    manifest.json                 ← 对账与来源留档</div>
+  </div>
+</section>
+
+<!-- ============ 6. 诚实边界 ============ -->
+<section class="honest">
+  <div class="wrap">
+    <h2>我们不会假装拿到了没有拿到的东西</h2>
+    <p class="lead">工具最该说清楚的不是它能做什么，而是它做不到什么。</p>
+    <ul>
+      <li>微信读书的<b>书签</b>：官方只提供数量、不提供内容。我们在产物里标注为「已归因的缺失」，而不是悄悄少给你。</li>
+      <li>QQ 邮箱的<b>压缩包与内嵌图片</b>：默认不落盘（有开关）。文档、PDF、PPT 这类会保留。</li>
+      <li><b>豆瓣 / 知乎尚未支持</b>。它们没有官方接口，需要浏览器自动化——稳定性和隐私成本都高得多，而且每次改版都可能失效。我们会在核心三平台稳定后再评估，不拿"即将支持"当卖点。</li>
+      <li>任何平台只要出现「声明有数据、却一条都没抓到」，一律<b>判为失败并报警</b>，不会给你一份看起来成功的空结果。</li>
+      <li>这是<b>个人数据工具</b>，请只导出你自己的账号数据。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 7. FAQ ============ -->
+<section>
+  <div class="wrap">
+    <h2>常见问题</h2>
+    <details><summary>它会把我数据传到云端吗？</summary>
+      <p>不会。它在本机运行，抓取结果写到 <code>~/.selfloom/</code>，不做遥测。除了调用你授权的平台接口，它不与任何第三方通信。</p></details>
+    <details><summary>需要科学上网吗？</summary>
+      <p>不需要。它访问的都是国内可直连的接口（腾讯域名、QQ 邮箱 IMAP）。唯一需要梯子的场景是你在 GitHub 上下载源码。</p></details>
+    <details><summary>我不会用命令行怎么办？</summary>
+      <p>我们的目标是做成"解压一个文件夹、双击一个文件"。便携包正在做，会晚于命令行版本发布。如果你现在就想用，把 <code>npx selfloom demo</code> 这一行复制到终端回车，不会有任何副作用。</p></details>
+    <details><summary>为什么先支持这三个平台？</summary>
+      <p>因为它们<b>都不需要浏览器</b>。这带来三个直接好处：跨平台（Windows/macOS/Linux 通吃）、能无人值守、体积小。反过来，依赖浏览器自动化的平台（豆瓣、知乎）会让包的体积和失效频率都上去——那不该是一个早期产品的重心。</p></details>
+    <details><summary>免费吗？</summary>
+      <p>MIT 开源，完全免费，代码全部公开。如果你觉得有用，给个 star 就是最好的支持。</p></details>
+    <details><summary>我的数据会不会被写进这个页面？</summary>
+      <p>不会。页面上的示例内容来自内置的<b>虚构样例数据</b>；页面上出现的数字是容量统计（多少本书、多少封邮件），不含任何个人内容。</p></details>
+  </div>
+</section>
+
+<!-- ============ 8. CTA ============ -->
+<section class="cta">
+  <div class="wrap">
+    <h2>30 秒看到结果</h2>
+    <p class="lead" style="margin-left:auto;margin-right:auto">不用注册、不用授权、不联网。</p>
+    <div class="steps">
+      <div class="step-card"><div class="n">第 1 步</div><b>零配置先看效果</b><code>npx selfloom demo</code></div>
+      <div class="step-card"><div class="n">第 2 步</div><b>接入你自己的平台</b><code>npx selfloom auth weread</code></div>
+      <div class="step-card"><div class="n">第 3 步</div><b>生成你的时间线</b><code>npx selfloom export</code></div>
+    </div>
+    <div class="btns">
+      <a class="btn btn-primary" href="#demo" id="cta-copy">📥 复制一行命令</a>
+      <a class="btn btn-ghost" aria-disabled="true" href="#" onclick="return false;">💻 下载便携包 <small>Windows / macOS · 即将推出</small></a>
+      <a class="btn btn-ghost" href="https://github.com/Zoin-Hub/selfloom" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-ghost" href="https://gitee.com/Zoin-Hub/selfloom" target="_blank" rel="noopener">Gitee</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    MIT License · 数据从未离开这台电脑 · 不做遥测<br>
+    <span style="opacity:.75">Self-Loom 是一个本地优先的个人数据工具。请只导出你自己的账号数据。</span><br>
+    <span style="opacity:.75;margin-top:8px;display:inline-block">
+      Made by <a href="https://github.com/Zoin-Hub" target="_blank" rel="noopener">@Zoin-Hub</a>
+      · 一个产品经理的独立开发实践 · <a href="https://github.com/Zoin-Hub/selfloom/issues" target="_blank" rel="noopener">反馈问题</a>
+    </span>
+  </div>
+</footer>
+
+<div class="toast" id="toast">已复制到剪贴板</div>
+
+<script>
+(function(){
+  'use strict';
+  var CMD = 'npx selfloom demo';
+
+  /* ---------- 复制 ---------- */
+  var btn = document.getElementById('copybtn');
+  var cta = document.getElementById('cta-copy');
+  var toast = document.getElementById('toast');
+  function show(msg){ toast.textContent = msg; toast.classList.add('on');
+    setTimeout(function(){ toast.classList.remove('on'); }, 1700); }
+  function fallback(text, ok){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.top='-1000px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); show(ok); } catch(e){ show('复制失败，请手动选择命令'); }
+    document.body.removeChild(ta);
+  }
+  function copy(text, ok){
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function(){ show(ok); }, function(){ fallback(text, ok); });
+    } else { fallback(text, ok); }
+  }
+  if (btn) btn.addEventListener('click', function(){ copy(CMD, '已复制：' + CMD); });
+  if (cta) cta.addEventListener('click', function(e){ e.preventDefault(); copy(CMD, '已复制：' + CMD); });
+
+  /* ---------- 终端回放（文字来自真实运行输出） ---------- */
+  var LINES = [
+    {t:'$ npx selfloom demo', c:'c', d:420},
+    {t:'', d:90},
+    {t:'✓ demo 产物已生成于 ~/.selfloom/demo', c:'g', d:110},
+    {t:'  样例数据全部虚构；没有读取、也没有改动你的任何真实数据或产物', c:'d', d:90},
+    {t:'', d:80},
+    {t:'  timeline.md        10 条时间线条目 ★ 先看这个', d:80},
+    {t:'  items.jsonl        14 条记录', d:80},
+    {t:'  deepseek.md         4 条', d:80},
+    {t:'  weread.md           7 条', d:80},
+    {t:'  qqmail.md           3 条', d:180},
+    {t:'', d:220},
+    {t:'$ npx selfloom doctor', c:'c', d:420},
+    {t:'', d:90},
+    {t:'  weread    正常    2102 条 · 上次同步 02:25  凭证已配置（wrk***AA）', d:90},
+    {t:'             账号笔记：249 本 · 2443 条（统计口径）', c:'d', d:90},
+    {t:'  deepseek  正常    1128 条 · 无需凭证', d:90},
+    {t:'  qqmail    正常     370 条 · 凭证已配置（hexin***@qq.com）', d:180},
+    {t:'', d:220},
+    {t:'$ npx selfloom export', c:'c', d:420},
+    {t:'✓ 产物已生成于 ~/.selfloom/out', c:'g', d:110},
+    {t:'  items.jsonl    3600 条记录', d:80},
+    {t:'  timeline.md    1894 条时间线条目 ★ 核心产物', c:'y', d:80},
+    {t:'  weread.md      2102 条', d:80},
+    {t:'  qqmail.md       370 条', d:80},
+    {t:'  deepseek.md    1128 条', d:80},
+    {t:'  ↳ 已镜像到 桌面/临时验收文件（6 个文件）', c:'d', d:200},
+    {t:'', d:200},
+    {t:'对账全部通过：3 个平台，无静默丢失', c:'g', d:300}
+  ];
+  var out = document.getElementById('termout');
+  var replay = document.getElementById('replay');
+  var timer = null, started = false;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function render(lines, cursor){
+    var html = '';
+    for (var i=0;i<lines.length;i++){
+      var l = lines[i];
+      var txt = String(l.t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html += l.c ? '<span class="'+l.c+'">'+txt+'</span>' : txt;
+      html += '\n';
+    }
+    if (cursor) html += '<span class="cursor"></span>';
+    out.innerHTML = html;
+  }
+
+  function play(){
+    if (timer) clearTimeout(timer);
+    var done = [];
+    if (reduce) { render(LINES, false); return; }
+    (function next(i){
+      if (i >= LINES.length) { render(done, true); return; }
+      render(done, true);
+      timer = setTimeout(function(){
+        done.push(LINES[i]);
+        next(i+1);
+      }, LINES[i].d || 120);
+    })(0);
+  }
+
+  if (out){
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if (en.isIntersecting && !started) { started = true; play(); io.disconnect(); }
+        });
+      }, {threshold:.25});
+      io.observe(document.getElementById('term'));
+    } else { play(); }
+  }
+  if (replay) replay.addEventListener('click', function(){ started = true; play(); });
+})();
+</script>
+</body>
+</html>
