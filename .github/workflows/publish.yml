@@ -3,12 +3,13 @@ name: Publish to npm
 # 使用 npm 的 Trusted Publishing（OIDC）发布：不需要任何长期令牌，
 # 也就绕开了 npm 正在收紧的「2FA-bypass token」限制。
 #
-# 首次发布前需要在 npmjs.com 上：
-#   包的 Settings → Trusted Publisher → 添加 GitHub Actions
-#     Organization/user: Zoin-Hub
-#     Repository:        selfloom
-#     Workflow filename: publish.yml
-#     Environment:       （留空）
+# 首次使用前需要在 npmjs.com 上配置：
+#   包的 Settings → Trusted publishing → Add trusted publisher → GitHub Actions
+#     Organization or user: Zoin-Hub
+#     Repository:           selfloom
+#     Workflow filename:    publish.yml
+#     Environment name:     （留空）
+#   并勾选允许「直接 npm publish」（默认只允许 stage publish，那样还需要人工批准）
 
 on:
   release:
@@ -27,8 +28,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+
+      # Trusted Publishing 要求 npm CLI >= 11.5.1，而 Node 自带的 npm 版本可能偏低
+      # （例如 Node 22 自带 npm 10.x）。显式升级，避免第一次发 Release 就失败。
+      - name: 升级 npm（Trusted Publishing 要求 >= 11.5.1）
+        run: npm install -g npm@latest && npm --version
 
       # 发布前自检：先把包打出来、解开、再跑一遍。
       # 目的：拦住「本地能跑、别人 npx 一装就崩」——files 少写一个目录就会这样。
