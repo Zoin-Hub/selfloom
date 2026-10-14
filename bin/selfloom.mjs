@@ -36,10 +36,31 @@ const C = {
 function help() {
   console.log(`${C.bold('selfloom')} ${C.dim('v' + VERSION)} —— 把你的创作从各平台，收成一份 AI 能读的文件
 
-${C.bold('用法')}
+${C.bold('★ 第一次用？照抄下面这四行就行')}
+${C.dim('  （尖括号 <> 是"占位符"的意思，不要照抄；请在 PowerShell 里运行，cmd.exe 会把 < > 当成重定向符而报错）')}
+
+  npx selfloom demo                     零配置看效果，不需要任何凭证
+  npx selfloom auth weread --clipboard  先在浏览器复制好 API Key
+  npx selfloom sync weread              抓取（可反复运行，第二次起是秒级增量）
+  npx selfloom export                   生成产物到 ~/.selfloom/out/
+
+${C.dim('  上面用的是 npx 形式，不需要安装。若你已执行 npm i -g selfloom，可把 npx 去掉直接写 selfloom。')}
+
+${C.bold('三个平台各自怎么接入')}
+
+  ${C.bold('微信读书')}   在 weread.qq.com/r/weread-skills 登录后复制 API Key
+              → npx selfloom auth weread --clipboard
+
+  ${C.bold('QQ 邮箱')}    在 QQ 邮箱设置里开启 IMAP 并生成 16 位授权码，复制它
+              → npx selfloom auth qqmail --user 你的邮箱@qq.com --clipboard
+
+  ${C.bold('DeepSeek')}   在网页版「导出全部对话」下载 zip（放默认下载目录即可，会自动找到）
+              → npx selfloom sync deepseek
+
+${C.bold('全部命令')}
   selfloom demo [--out 目录]          零配置看效果（样例数据，不联网、不需要凭证）
-  selfloom auth <platform> [选项]     配置并校验凭证（一次性）
-  selfloom sync <platform> [选项]     抓取（可反复运行做增量）
+  selfloom auth <平台> [选项]         配置并校验凭证（一次性）
+  selfloom sync <平台> [选项]         抓取（可反复运行做增量）
   selfloom export [--out 目录]        生成统一产物
   selfloom doctor                     体检：凭证状态 / 数据规模 / 下一步
   selfloom list                       已同步的平台
@@ -347,9 +368,17 @@ function cmdDemo(args) {
   console.log(preview);
   console.log('');
   console.log(C.bold('这就是你接入真实平台后会得到的东西。'));
-  console.log(`下一步：${C.bold('selfloom auth <platform>')}`);
-  console.log(`  ${C.dim('可接入：weread（API Key）· deepseek（网页版导出 zip）· qqmail（IMAP 授权码）')}`);
-  console.log(`  ${C.dim(`完整说明：selfloom help`)}`);
+  console.log('');
+  console.log(C.bold('下一步：先接入一个平台（照抄下面任意一行）'));
+  console.log(`  微信读书   →  ${C.bold('npx selfloom auth weread --clipboard')}`);
+  console.log(`             ${C.dim('（先去 weread.qq.com/r/weread-skills 登录，复制 API Key）')}`);
+  console.log(`  QQ 邮箱    →  ${C.bold('npx selfloom auth qqmail --user 你的邮箱@qq.com --clipboard')}`);
+  console.log(`             ${C.dim('（先去 QQ 邮箱设置里开启 IMAP，生成 16 位授权码并复制）')}`);
+  console.log(`  DeepSeek   →  ${C.bold('npx selfloom sync deepseek')}`);
+  console.log(`             ${C.dim('（先去网页版「导出全部对话」，下载 zip 到默认下载目录）')}`);
+  console.log('');
+  console.log(`  然后：${C.bold('npx selfloom sync <平台>')} 抓取 → ${C.bold('npx selfloom export')} 生成产物`);
+  console.log(`  ${C.dim('完整说明：npx selfloom help')}`);
 }
 
 const args = parseArgs(process.argv.slice(2));
