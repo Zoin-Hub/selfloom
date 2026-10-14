@@ -21,7 +21,8 @@ import * as deepseek from '../src/adapters/deepseek.mjs';
 import * as qqmail from '../src/adapters/qqmail.mjs';
 import * as weread from '../src/adapters/weread.mjs';
 
-const VERSION = '0.1.0';
+// 版本号从 package.json 读取，避免硬编码与实际发布版本不一致
+const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const ADAPTERS = { weread, deepseek, qqmail };
 const PLANNED = ['douban', 'zhihu'];
 
@@ -58,14 +59,15 @@ ${C.bold('三个平台各自怎么接入')}
               → npx selfloom sync deepseek
 
 ${C.bold('全部命令')}
-  selfloom demo [--out 目录]          零配置看效果（样例数据，不联网、不需要凭证）
-  selfloom auth <平台> [选项]         配置并校验凭证（一次性）
-  selfloom sync <平台> [选项]         抓取（可反复运行做增量）
-  selfloom export [--out 目录]        生成统一产物
-  selfloom doctor                     体检：凭证状态 / 数据规模 / 下一步
-  selfloom list                       已同步的平台
-  selfloom config [set <键> <值>]     查看或修改本机配置
-  selfloom help                       显示本帮助
+  npx selfloom demo [--out 目录]      零配置看效果（样例数据，不联网、不需要凭证）
+  npx selfloom auth <平台> [选项]     配置并校验凭证（一次性）
+  npx selfloom sync <平台> [选项]     抓取（可反复运行做增量）
+  npx selfloom export [--out 目录]    生成统一产物（所有已同步平台通用）
+  npx selfloom doctor                 体检：凭证状态 / 数据规模 / 下一步
+  npx selfloom list                   已同步的平台
+  npx selfloom config [set <键> <值>] 查看或修改本机配置
+  npx selfloom help                   显示本帮助
+  ${C.dim('（尖括号 < > 表示"这里要替换成真实值"，不是让你照抄尖括号）')}
 
 ${C.bold('已支持')}   ${Object.keys(ADAPTERS).join(', ')}
 ${C.bold('开发中')}   ${PLANNED.join(', ')}
@@ -124,7 +126,7 @@ function progressPrinter() {
 
 async function cmdSync(args) {
   const p = args._[1];
-  if (!p) throw new Error('用法：selfloom sync <platform>');
+  if (!p) throw new Error('用法：npx selfloom sync <平台>');
   const a = ADAPTERS[p];
   if (!a) {
     throw new Error(
@@ -170,7 +172,7 @@ async function cmdSync(args) {
     console.log(`\n${C.dim('— 解析诊断（前几条对话，用于定位格式偏差）—')}`);
     for (const d of r.diagnostics) console.log('  ' + JSON.stringify(d));
   }
-  console.log(`\n下一步：${C.bold('selfloom export')} 生成统一产物`);
+  console.log(`\n下一步：${C.bold('npx selfloom export')} 生成统一产物`);
 }
 
 async function cmdAuth(args) {
@@ -182,7 +184,7 @@ async function cmdAuth(args) {
       pass = readClipboard();
       if (!pass) throw new Error('没能读到剪贴板内容。请先复制 16 位授权码，或用 --pass <授权码> 传入。');
     }
-    if (!user) throw new Error('请用 --user 指定邮箱地址，例如：selfloom auth qqmail --user you@qq.com --clipboard');
+    if (!user) throw new Error('请用 --user 指定邮箱地址，例如：npx selfloom auth qqmail --user you@qq.com --clipboard');
     if (!pass) throw new Error('缺少授权码：先复制授权码再加 --clipboard，或用 --pass <授权码> 传入。');
 
     console.log(`${C.dim('正在用 IMAP 验证凭证…')}`);
@@ -193,7 +195,8 @@ async function cmdAuth(args) {
     console.log(`  服务器   ${info.host}`);
     console.log(`  收件箱   ${info.mailbox} · ${info.exists} 封邮件`);
     console.log(`  授权码   ${mask(pass)} ${C.dim('（只存在本机，未写入任何产物）')}`);
-    console.log(`\n下一步：${C.bold('selfloom sync qqmail --limit 5')} 先试跑 5 封`);
+    console.log(`\n下一步：${C.bold('npx selfloom sync qqmail --limit 5')} 先试跑 5 封`);
+    console.log(`再下一步：${C.bold('npx selfloom export')} 生成产物`);
     return;
   }
   if (p === 'weread') {
@@ -207,11 +210,16 @@ async function cmdAuth(args) {
     }
     if (!key) {
       throw new Error(
-        '缺少 API Key。下面三种写法都可以：\n' +
-          `  ${C.bold('npx selfloom auth weread --clipboard')}          ${C.dim('推荐：先在浏览器复制好 Key')}\n` +
-          `  ${C.bold('npx selfloom auth weread --key wrk-xxxxxxxx')}\n` +
-          `  ${C.bold('npx selfloom auth weread wrk-xxxxxxxx')}\n` +
-          `  ${C.dim('获取地址：https://weread.qq.com/r/weread-skills（登录后复制）')}`,
+        '缺少 API Key。请二选一：\n\n' +
+          `  ${C.bold('【方式 A · 推荐】不用手打 Key')}\n` +
+          `    1) 浏览器打开 ${C.bold('https://weread.qq.com/r/weread-skills')} 并登录\n` +
+          `    2) 在页面「2 获取 API Key」那一栏，点「复制」按钮\n` +
+          `    3) 回到这里运行（会自动读取你刚复制的 Key）：\n` +
+          `       ${C.bold('npx selfloom auth weread --clipboard')}\n\n` +
+          `  ${C.bold('【方式 B】手动粘贴')}\n` +
+          `    把下面这行整段复制，然后把 ${C.bold('wrk-你的APIKey')} 换成你复制到的内容\n` +
+          `    （${C.bold('--key')} 后面有一个空格，不要删）：\n` +
+          `       ${C.bold('npx selfloom auth weread --key wrk-你的APIKey')}`,
       );
     }
     key = String(key).trim();
@@ -222,10 +230,11 @@ async function cmdAuth(args) {
     console.log(`  有笔记的书   ${info.totalBookCount} 本`);
     console.log(`  笔记总数     ${info.totalNoteCount} 条 ${C.dim('（统计口径）')}`);
     console.log(`  API Key      ${mask(key)} ${C.dim('（只存在本机，未写入任何产物）')}`);
-    console.log(`\n下一步：${C.bold('selfloom sync weread')}  ${C.dim('（首次约 2–3 分钟，之后是秒级增量）')}`);
+    console.log(`\n下一步：${C.bold('npx selfloom sync weread')}  ${C.dim('（首次约 2–3 分钟，之后是秒级增量）')}`);
+    console.log(`再下一步：${C.bold('npx selfloom export')} 生成产物`);
     return;
   }
-  throw new Error(`用法：selfloom auth <platform>（可配置：weread、qqmail）`);
+  throw new Error(`用法：npx selfloom auth <平台>（可配置：weread、qqmail）`);
 }
 
 function cmdExport(args) {
@@ -244,15 +253,22 @@ function cmdExport(args) {
     console.log(`\n${C.red('⚠ 对账未通过：')}${bad.map((b) => b.platform).join(', ')} —— ${bad[0].reason}`);
     process.exitCode = 2;
   } else {
-    console.log(`\n${C.green('对账全部通过')}：${r.reconciles.length} 个平台，无静默丢失`);
+    console.log(
+      `\n${C.green('对账全部通过')}：${r.reconciles.length} 个平台（${r.reconciles
+        .map((x) => x.label)
+        .join(' / ')}），无静默丢失`,
+    );
   }
+  console.log(
+    C.dim('  说明：产物只包含你「已经同步过」的平台。没跑过 sync 的平台不会出现在这里，也不会被对账。'),
+  );
 }
 
 function cmdList() {
   const results = loadPlatformResults();
   if (!results.length) {
     console.log('还没有任何平台数据。');
-    console.log(`下一步：${C.bold('selfloom sync deepseek')}`);
+    console.log(`下一步：${C.bold('npx selfloom sync deepseek')}`);
     return;
   }
   console.log(C.bold('已同步的平台：'));
@@ -268,7 +284,7 @@ function cmdDoctor() {
   console.log(C.bold('selfloom 体检报告'));
   console.log(`  数据目录   ${HOME}`);
   console.log(`  产物目录   ${OUT_DIR}`);
-  console.log(`  镜像目录   ${cfg.mirror_dir ? cfg.mirror_dir : C.dim('未设置（selfloom config set mirror <目录>）')}`);
+  console.log(`  镜像目录   ${cfg.mirror_dir ? cfg.mirror_dir : C.dim('未设置（npx selfloom config set mirror <目录>）')}`);
   console.log('');
 
   const results = loadPlatformResults();
@@ -304,12 +320,12 @@ function cmdDoctor() {
   const next = [];
   for (const key of Object.keys(ADAPTERS)) {
     if (synced.has(key)) continue;
-    if (key === 'deepseek') next.push(`selfloom sync deepseek`.padEnd(26) + C.dim('先在 DeepSeek 网页版导出对话数据'));
-    else if (!creds[key]) next.push(`selfloom auth ${key}`.padEnd(26) + C.dim('先获取凭证'));
-    else next.push(`selfloom sync ${key}`.padEnd(26) + C.dim('可先加 --dry-run 或 --limit 试跑'));
+    if (key === 'deepseek') next.push(`npx selfloom sync deepseek`.padEnd(30) + C.dim('先在 DeepSeek 网页版导出对话数据'));
+    else if (!creds[key]) next.push(`npx selfloom auth ${key}`.padEnd(30) + C.dim('先获取凭证'));
+    else next.push(`npx selfloom sync ${key}`.padEnd(30) + C.dim('可先加 --dry-run 或 --limit 试跑'));
   }
-  if (results.length) next.push('selfloom export'.padEnd(26) + C.dim('生成 items.jsonl / timeline.md'));
-  if (!next.length) next.push('一切就绪，跑 selfloom export 更新产物');
+  if (results.length) next.push('npx selfloom export'.padEnd(30) + C.dim('生成 items.jsonl / timeline.md（所有已同步平台通用）'));
+  if (!next.length) next.push('一切就绪，跑 npx selfloom export 更新产物');
   next.forEach((n, i) => console.log(`  ${i + 1}. ${n}`));
 }
 
@@ -329,7 +345,7 @@ function cmdConfig(args) {
   if (args._[1] === 'set') {
     const key = args._[2];
     const value = args._[3];
-    if (!key || value === undefined) throw new Error('用法：selfloom config set <键> <值>');
+    if (!key || value === undefined) throw new Error('用法：npx selfloom config set <键> <值>');
     const spec = CONFIG_KEYS[key];
     if (!spec) throw new Error(`不支持的配置键：${key}\n可用：${Object.keys(CONFIG_KEYS).join('、')}`);
     let cur = cfg;
@@ -353,8 +369,8 @@ function cmdConfig(args) {
   console.log(`  qqmail.save_archives       ${q.save_archives ? 'on' : 'off'}`);
   console.log(`  qqmail.save_inline         ${q.save_inline ? 'on' : 'off'}`);
   console.log(`  qqmail.match_to            ${q.match_to ? 'on（同时按收件人匹配）' : 'off（只看发件人）'}`);
-  console.log(`\n${C.dim('例：selfloom config set qqmail.allow_from "dingtalk.com"')}`);
-  console.log(`${C.dim('    selfloom config set mirror "D:\\\\某目录"    关闭镜像：selfloom config set mirror off')}`);
+  console.log(`\n${C.dim('例：npx selfloom config set qqmail.allow_from "dingtalk.com"')}`);
+  console.log(`${C.dim('    关闭镜像：npx selfloom config set mirror off')}`);
 }
 
 function cmdDemo(args) {
@@ -374,16 +390,31 @@ function cmdDemo(args) {
   console.log('');
   console.log(C.bold('这就是你接入真实平台后会得到的东西。'));
   console.log('');
-  console.log(C.bold('下一步：先接入一个平台（照抄下面任意一行）'));
-  console.log(`  微信读书   →  ${C.bold('npx selfloom auth weread --clipboard')}`);
-  console.log(`             ${C.dim('（先去 weread.qq.com/r/weread-skills 登录，复制 API Key）')}`);
-  console.log(`  QQ 邮箱    →  ${C.bold('npx selfloom auth qqmail --user 你的邮箱@qq.com --clipboard')}`);
-  console.log(`             ${C.dim('（先去 QQ 邮箱设置里开启 IMAP，生成 16 位授权码并复制）')}`);
-  console.log(`  DeepSeek   →  ${C.bold('npx selfloom sync deepseek')}`);
-  console.log(`             ${C.dim('（先去网页版「导出全部对话」，下载 zip 到默认下载目录）')}`);
+  console.log(C.bold('下一步：接入你自己的平台（下面的命令可直接复制，只需替换标注出的部分）'));
   console.log('');
-  console.log(`  然后：${C.bold('npx selfloom sync <平台>')} 抓取 → ${C.bold('npx selfloom export')} 生成产物`);
-  console.log(`  ${C.dim('完整说明：npx selfloom help')}`);
+  console.log(`  ${C.bold('① 微信读书')}`);
+  console.log(`     1) 浏览器打开 ${C.bold('https://weread.qq.com/r/weread-skills')} 并登录`);
+  console.log(`     2) 点「2 获取 API Key」那一栏的「复制」按钮`);
+  console.log(`     3) 运行下面这条（--clipboard 会自动读取你刚复制的 Key，不用手打）：`);
+  console.log(`        ${C.bold('npx selfloom auth weread --clipboard')}`);
+  console.log(`     然后抓取：${C.bold('npx selfloom sync weread')}`);
+  console.log('');
+  console.log(`  ${C.bold('② QQ 邮箱')}`);
+  console.log(`     1) 浏览器打开 ${C.bold('https://mail.qq.com')} 登录 → 右上角头像 → 账号与安全 → 安全设置`);
+  console.log(`        → 找到「POP3/IMAP/SMTP/Exchange/CardDAV 服务」→ 开启服务（需手机发短信）→ 复制生成的 16 位授权码`);
+  console.log(`     2) 运行下面这条，把「你的邮箱@qq.com」换成你的真实邮箱（替换后即可直接执行）：`);
+  console.log(`        ${C.bold('npx selfloom auth qqmail --user 你的邮箱@qq.com --clipboard')}`);
+  console.log(`     然后抓取：${C.bold('npx selfloom sync qqmail')}`);
+  console.log('');
+  console.log(`  ${C.bold('③ DeepSeek')}`);
+  console.log(`     1) 网页版左下角账号 → Setting → Data → Export data → 下载 zip（保持在默认下载目录即可，会自动找到）`);
+  console.log(`     2) 运行：${C.bold('npx selfloom sync deepseek')}`);
+  console.log('');
+  console.log(`  ${C.bold('最后一步：生成产物')}`);
+  console.log(`     ${C.bold('npx selfloom export')}   ${C.dim('← 三个平台通用，跑一次就够了；重复跑只更新不重复计算')}`);
+  console.log(`     ${C.dim('产物会写到 ~/.selfloom/out/，核心文件是 timeline.md')}`);
+  console.log('');
+  console.log(`  ${C.dim('卡住了？运行 npx selfloom doctor 看体检报告；完整说明：npx selfloom help')}`);
 }
 
 const args = parseArgs(process.argv.slice(2));

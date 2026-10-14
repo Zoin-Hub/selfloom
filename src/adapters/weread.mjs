@@ -14,7 +14,7 @@
  */
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { RAW_DIR, ensureHome, readJson, writeJson, toMs, fmtDate, fmtDateTime, sleep } from '../core/util.mjs';
+import { RAW_DIR, ensureHome, readJson, writeJson, toMs, fmtDate, fmtDateTime, sleep, fetchRetry } from '../core/util.mjs';
 import { getCred } from '../core/secret.mjs';
 
 export const platform = 'weread';
@@ -43,11 +43,16 @@ function resolveKey(opts) {
 
 /** 调一次网关。所有业务参数必须平铺在 body 顶层，并带 skill_version。 */
 async function call(apiName, params, key, debug) {
-  const res = await fetch(GATEWAY, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ api_name: apiName, ...params, skill_version: SKILL_VERSION }),
-  });
+  // 用带重试的请求：网络抖动不该让用户以为自己 Key 失效
+  const res = await fetchRetry(
+    GATEWAY,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_name: apiName, ...params, skill_version: SKILL_VERSION }),
+    },
+    { retries: 3, timeoutMs: 20000, debug },
+  );
   const text = await res.text();
   let json;
   try {

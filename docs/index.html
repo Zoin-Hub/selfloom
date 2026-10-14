@@ -181,6 +181,22 @@
   .honest li{margin:10px 0}
   .honest strong{color:var(--ink)}
 
+  /* ---------- 上手步骤 ---------- */
+  .setup-step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:14px}
+  .setup-step h3{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .setup-step .n{font-size:12px;font-weight:800;color:#fff;background:var(--accent);width:22px;height:22px;
+    border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .cmdchip{display:block;background:#12121a;color:#d9d9e3;font-family:var(--mono);font-size:12.5px;
+    padding:11px 14px;border-radius:9px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+  .rep{color:#ffd479;background:rgba(255,212,121,.1);padding:0 3px;border-radius:4px}
+  .kbd{display:inline-block;font-family:var(--mono);font-size:12px;background:#f2f2f7;border:1px solid var(--line-2);
+    border-bottom-width:2px;border-radius:6px;padding:1px 7px;margin:0 2px;color:var(--ink)}
+  .pathsteps{color:var(--ink-2);font-size:13.5px;line-height:2.05}
+  .pathsteps b{color:var(--ink)}
+  .pathsteps a{font-weight:600}
+  .replegend{display:inline-block;font-family:var(--mono);font-size:12.5px;color:#8a6d1f;
+    background:rgba(255,212,121,.18);padding:2px 7px;border-radius:5px}
+
   /* ---------- FAQ ---------- */
   details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin-bottom:10px}
   details[open]{border-color:var(--line-2)}
@@ -223,6 +239,7 @@
       <a class="hide-sm" href="#example">实例</a>
       <a class="hide-sm" href="#proof">检测</a>
       <a class="hide-sm" href="#principle">原理</a>
+      <a href="#setup">上手</a>
       <a href="https://github.com/Zoin-Hub/selfloom/blob/main/README.en.md" target="_blank" rel="noopener">English</a>
     </nav>
   </div>
@@ -544,7 +561,94 @@
   </div>
 </section>
 
-<!-- ============ 7. FAQ ============ -->
+<!-- ============ 7. 上手步骤 ============ -->
+<section id="setup">
+  <div class="wrap">
+    <span class="eyebrow">上手</span>
+    <h2>三步跑出你自己的时间线</h2>
+    <p class="lead">下面每一条命令都可以<strong>整段复制粘贴</strong>执行。只有标成 <span class="replegend">这种颜色的部分</span>需要换成你自己的信息，其余一个字都不要改。</p>
+
+    <div class="setup-step">
+      <h3><span class="n">0</span> 打开一个终端</h3>
+      <div class="pathsteps">
+        <b>Windows</b>：按 <span class="kbd">Win</span> + <span class="kbd">R</span> → 输入 <span class="kbd">powershell</span> → 回车<br>
+        <b>macOS</b>：按 <span class="kbd">Command</span> + <span class="kbd">空格</span> → 输入 <span class="kbd">Terminal</span> → 回车
+      </div>
+      <p class="note" style="margin-top:10px">⚠️ Windows 上请用 <b>PowerShell</b>，不要用 cmd 或「命令提示符」——cmd 会把命令里的尖括号当成重定向符号而报错。</p>
+    </div>
+
+    <div class="setup-step">
+      <h3><span class="n">1</span> 先看效果（不需要任何凭证、不联网）</h3>
+      <code class="cmdchip">npx selfloom demo</code>
+      <p class="note">它用内置的虚构样例数据生成一份完整产物，让你先看清最终长什么样、值不值得接自己的数据。</p>
+    </div>
+
+    <div class="setup-step">
+      <h3><span class="n">2</span> 接入你的平台（三个都可以接，也可以只接一个）</h3>
+
+      <p><b>① 微信读书</b></p>
+      <div class="pathsteps">
+        1. 浏览器打开 <a href="https://weread.qq.com/r/weread-skills" target="_blank" rel="noopener">weread.qq.com/r/weread-skills</a> 并登录<br>
+        2. 在页面「<b>2 获取 API Key</b>」那一栏，点<b>「获取 API Key」</b>按钮，再点出现的<b>复制</b>图标<br>
+        3. 回到终端运行下面这条（<b>--clipboard</b> 会自动读取你刚复制的 Key，不用手打）：
+      </div>
+      <code class="cmdchip">npx selfloom auth weread --clipboard</code>
+      <code class="cmdchip">npx selfloom sync weread</code>
+      <p class="note">不想用剪贴板？也可以手动粘：<code>npx selfloom auth weread --key <span class="rep">wrk-你的APIKey</span></code>（<code>--key</code> 后面有一个空格，不要删）</p>
+
+      <p style="margin-top:22px"><b>② QQ 邮箱</b></p>
+      <div class="pathsteps">
+        1. 浏览器打开 <a href="https://mail.qq.com" target="_blank" rel="noopener">mail.qq.com</a> 并登录<br>
+        2. 右上角<b>头像</b> → <b>账号与安全</b> → <b>安全设置</b><br>
+        3. 找到「<b>POP3/IMAP/SMTP/Exchange/CardDAV 服务</b>」→ 点<b>开启服务</b> → 按提示用手机发短信验证 → 复制生成的 <b>16 位授权码</b><br>
+        4. 回到终端运行（把黄色部分换成你的真实邮箱，其余不要改）：
+      </div>
+      <code class="cmdchip">npx selfloom auth qqmail --user <span class="rep">你的邮箱@qq.com</span> --clipboard</code>
+      <code class="cmdchip">npx selfloom sync qqmail</code>
+      <p class="note">授权码是 <b>16 位字母</b>，不是你的 QQ 密码。它只能收信、不能发信，随时可以在同一页面撤销。</p>
+
+      <p style="margin-top:22px"><b>③ DeepSeek</b></p>
+      <div class="pathsteps">
+        1. 浏览器打开 <a href="https://chat.deepseek.com" target="_blank" rel="noopener">chat.deepseek.com</a> 并登录<br>
+        2. <b>左下角账号</b> → <b>Setting</b> → <b>Data</b> → <b>Export data</b> → 点下载<br>
+        3. 让 zip 留在默认的<b>下载文件夹</b>里（不用移动、不用解压），然后运行：
+      </div>
+      <code class="cmdchip">npx selfloom sync deepseek</code>
+    </div>
+
+    <div class="setup-step">
+      <h3><span class="n">3</span> 生成产物（三个平台通用，跑一次就够）</h3>
+      <code class="cmdchip">npx selfloom export</code>
+      <p class="note">产物写到 <code>~/.selfloom/out/</code>，核心文件是 <code>timeline.md</code>。重复运行只更新、不会重复计算；没接入的平台不会出现在产物里。</p>
+    </div>
+
+    <h3 style="margin-top:40px">以后每次更新</h3>
+    <p class="lead">日常更新很快——微信读书 1.5 秒、QQ 邮箱 0.6 秒，只处理有变化的部分。出问题时按右列处理。</p>
+    <table class="cmp">
+      <thead><tr><th>平台</th><th>正常情况</th><th>如果凭证失效 / 文件没了</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>微信读书</b></td>
+          <td><code>npx selfloom sync weread</code><br><span class="note">只重抓笔记数变了的书</span></td>
+          <td>API Key 被重置了 → 去 <a href="https://weread.qq.com/r/weread-skills" target="_blank" rel="noopener">weread.qq.com/r/weread-skills</a> 重新复制 → <code>npx selfloom auth weread --clipboard</code></td>
+        </tr>
+        <tr>
+          <td><b>QQ 邮箱</b></td>
+          <td><code>npx selfloom sync qqmail</code><br><span class="note">只处理新邮件</span></td>
+          <td>授权码失效了 → 回到「账号与安全 → 安全设置」重新生成 → <code>npx selfloom auth qqmail --user 你的邮箱 --clipboard</code></td>
+        </tr>
+        <tr>
+          <td><b>DeepSeek</b></td>
+          <td>先在网页版导出 zip，再 <code>npx selfloom sync deepseek</code></td>
+          <td>zip 被删了 → 重新导出一次即可；它会自动找下载目录里最新的那个</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="note">不确定哪里出了问题？运行 <code>npx selfloom doctor</code> —— 它会逐个平台告诉你凭证状态、数据规模，以及下一步该做什么。</p>
+  </div>
+</section>
+
+<!-- ============ 8. FAQ ============ -->
 <section>
   <div class="wrap">
     <h2>常见问题</h2>

@@ -24,6 +24,48 @@ export function ensureHome() {
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * 带超时与自动重试的 fetch，并把「网络失败」与「认证失败」明确区分开。
+ *
+ * 为什么需要它（来自真实用户反馈）：
+ *   第一次使用时，用户看到裸的 `fetch failed` 会以为"API Key 失效了"，
+ *   于是反复去重新获取 Key——其实只是网络抖动，或者挂着代理导致国内域名走不通。
+ *   网络错误必须：① 先自动重试 ② 报错时给出可操作的原因，而不是把 Node 的原始字符串抛出去。
+ */
+export async function fetchRetry(url, options = {}, { retries = 3, timeoutMs = 20000, debug = false } = {}) {
+  let lastErr = null;
+  for (let i = 0; i < retries; i++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: ctrl.signal });
+      clearTimeout(timer);
+      return res;
+    } catch (e) {
+      clearTimeout(timer);
+      lastErr = e;
+      if (debug) console.error(`[net] 第 ${i + 1}/${retries} 次请求失败：${e.message}`);
+      if (i < retries - 1) await sleep(700 * (i + 1));
+    }
+  }
+  let host = url;
+  try {
+    host = new URL(url).host;
+  } catch {
+    /* 忽略 */
+  }
+  const err = new Error(
+    `网络请求失败 —— 这**不是** API Key / 授权码的问题\n` +
+      `  连不上：${host}\n` +
+      `  已自动重试 ${retries} 次仍失败。常见原因：\n` +
+      `    ① 你挂着代理/梯子，而这是国内域名 —— 请先关掉代理再试\n` +
+      `    ② 网络抖动或临时不可达 —— 等一会儿重试\n` +
+      `  原始错误：${lastErr?.message ?? '未知'}`,
+  );
+  err.cause = lastErr;
+  throw err;
+}
+
 export function sha256(buf) {
   return createHash('sha256').update(buf).digest('hex');
 }

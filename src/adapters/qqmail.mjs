@@ -129,10 +129,16 @@ function resolveCred(opts) {
   const pass = opts.pass || stored.pass;
   if (!user || !pass) {
     throw new Error(
-      '还没有配置 QQ 邮箱凭证。\n' +
-        '  1) 在 QQ 邮箱 → 设置 → 账户，开启 IMAP 服务并生成授权码（16 位）\n' +
-        '  2) 运行：selfloom auth qqmail --user 你的邮箱@qq.com --clipboard\n' +
-        '     （先复制授权码；也可用 --pass <授权码> 直接传入）',
+      '还没有配置 QQ 邮箱凭证。请按这个顺序做：\n\n' +
+        `  1) 浏览器打开 ${'https://mail.qq.com'} 并登录你的 QQ 邮箱\n` +
+        `  2) 点右上角${'头像'} → ${'账号与安全'} → ${'安全设置'}\n` +
+        `     找到「${'POP3/IMAP/SMTP/Exchange/CardDAV 服务'}」\n` +
+        `  3) 点「开启服务」，按提示用手机发短信验证，之后会生成一个 ${'16 位授权码'}\n` +
+        `  4) 复制那个授权码，回到这里运行（把 ${'你的邮箱@qq.com'} 换成你的真实邮箱；\n` +
+        `     --clipboard 会自动读取你刚复制的授权码）：\n` +
+        `       ${'npx selfloom auth qqmail --user 你的邮箱@qq.com --clipboard'}\n\n` +
+        `  也可以手动粘贴授权码：\n` +
+        `       ${'npx selfloom auth qqmail --user 你的邮箱@qq.com --pass 你的16位授权码'}`,
     );
   }
   return { user, pass, host: opts.host || stored.host || 'imap.qq.com', port: Number(opts.port || stored.port || 993) };
