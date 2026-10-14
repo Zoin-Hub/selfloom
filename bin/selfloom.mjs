@@ -198,15 +198,20 @@ async function cmdAuth(args) {
   }
   if (p === 'weread') {
     let key = typeof args.key === 'string' ? args.key : null;
+    // 也接受直接写在平台名后面的写法：selfloom auth weread wrk-xxxx
+    // （用户最自然的输入方式，不该被拒绝）
+    if (!key && typeof args._[2] === 'string' && args._[2].trim().startsWith('wrk-')) key = args._[2].trim();
     if (!key && args.clipboard) {
       key = readClipboard();
-      if (!key) throw new Error('没能读到剪贴板内容。请先复制 API Key（wrk- 开头），或用 --key <API Key> 传入。');
+      if (!key) throw new Error('没能读到剪贴板内容。请先复制 API Key（wrk- 开头），或用 --key 传入。');
     }
     if (!key) {
       throw new Error(
-        '缺少 API Key。\n' +
-          '  1) 打开 https://weread.qq.com/r/weread-skills 登录后获取 API Key（wrk- 开头）\n' +
-          '  2) 复制它，然后运行：selfloom auth weread --clipboard',
+        '缺少 API Key。下面三种写法都可以：\n' +
+          `  ${C.bold('npx selfloom auth weread --clipboard')}          ${C.dim('推荐：先在浏览器复制好 Key')}\n` +
+          `  ${C.bold('npx selfloom auth weread --key wrk-xxxxxxxx')}\n` +
+          `  ${C.bold('npx selfloom auth weread wrk-xxxxxxxx')}\n` +
+          `  ${C.dim('获取地址：https://weread.qq.com/r/weread-skills（登录后复制）')}`,
       );
     }
     key = String(key).trim();
